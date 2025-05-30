@@ -1,5 +1,5 @@
 import datetime
-from flask import Flask, render_template_string, request
+from flask import Flask, render_template_string, request, redirect, url_for # Added redirect, url_for
 
 app = Flask(__name__)
 
@@ -101,6 +101,8 @@ def home():
         <li><a href="/fact_bot">Ask a fact question</a></li>
     </ul>
     """
+    # Added "Forget Name" link here
+    forget_name_link = "<p><a href='/reset_name'>Forget my name</a></p>"
 
     if not user_name:
         return f"""
@@ -115,7 +117,15 @@ def home():
         return f"""
         <h1>{time_greeting}, {user_name}! Welcome back to your Companion!</h1>
         {menu_html}
+        {forget_name_link}
         """
+
+# New route to reset the user's name
+@app.route('/reset_name')
+def reset_name():
+    global user_name
+    user_name = "" # Clear the global variable
+    return redirect(url_for('home')) # Redirect back to the home page
 
 # This route handles the mood checker functionality
 @app.route('/mood_checker', methods=['GET', 'POST'])
@@ -173,23 +183,6 @@ def fact_bot():
         user_question_input = request.form['question']
         ai_response = answer_fact_question_web(user_question_input)
         return f"""
-        <h1>Your Question: {user_question_input}</h1>
-        <p>AI says: {ai_response}</p>
-        <p><a href="/fact_bot">Ask another question</a></p>
-        <p><a href="/">Go back to main menu</a></p>
-        """
-    else:
-        return """
-        <h1>Fact Bot Mode</h1>
-        <p>Ask me a question about facts I know.</p>
-        <form method="POST" action="/fact_bot">
-            Your question: <input type="text" name="question" placeholder="e.g., what is your name">
-            <input type="submit" value="Ask AI">
-        </form>
-        <p><a href="/">Go back to main menu</a></p>
-        """
-
-if __name__ == '__main__':
-    app.run(debug=True)
+        <h1>Your Quest
 
 
