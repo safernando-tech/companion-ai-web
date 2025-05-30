@@ -1,7 +1,11 @@
 import datetime
-from flask import Flask, render_template_string, request, redirect, url_for # Added redirect, url_for
+from flask import Flask, render_template_string, request, redirect, url_for, session # Added 'session'
 
 app = Flask(__name__)
+# THIS IS VERY IMPORTANT! Flask needs a secret key to keep session data secure.
+# Make sure to replace 'b'i\xc9s\xb3\xce<N\x9e\xc0H\xa9\x14,\xfb\xd9x8:\xc41\xf1\x0f\xd6]'
+' with the random key you generated.
+app.secret_key = 'YOUR_VERY_LONG_AND_RANDOM_SECRET_KEY_HERE'
 
 # --- GLOBAL KNOWLEDGE BASE FOR FACT BOT ---
 knowledge_base = {
@@ -17,14 +21,10 @@ knowledge_base = {
     "tell me a joke": "Why don't scientists trust atoms? Because they make up everything!",
 }
 
-# --- GLOBAL VARIABLE FOR USER'S NAME (Simple Memory for the web session) ---
-user_name = ""
-
-# --- FUNCTION FOR MOOD DETECTION (Adapted for Web) ---
+# --- FUNCTIONS (no change needed here for session) ---
 def check_mood_web(user_response):
     user_response_lower = user_response.lower()
     reply = ""
-
     if any(word in user_response_lower for word in ["amazing", "awesome", "fantastic", "excellent", "super", "great"]):
         reply = "Wow, that's absolutely fantastic! Keep that energy going!"
     elif any(word in user_response_lower for word in ["good", "fine", "happy", "well"]):
@@ -41,14 +41,12 @@ def check_mood_web(user_response):
         reply = "Thanks for sharing how you're doing."
     return reply
 
-# --- FUNCTION FOR MATH SOLVER (Adapted for Web) ---
 def solve_math_problem_web(num1_str, operation, num2_str):
     try:
         num1 = float(num1_str)
         num2 = float(num2_str)
     except ValueError:
         return "Error: Invalid input. Please enter numbers only for calculations."
-
     result = ""
     if operation == "+":
         result = f"{num1} + {num2} = {num1 + num2}"
@@ -65,7 +63,6 @@ def solve_math_problem_web(num1_str, operation, num2_str):
         return "Sorry, I don't recognize that operation. Please use +, -, *, or /."
     return f"Result: {result}"
 
-# --- FUNCTION FOR FACT BOT (Adapted for Web) ---
 def answer_fact_question_web(user_question):
     user_question_lower = user_question.lower()
     for question_key, answer in knowledge_base.items():
@@ -75,15 +72,16 @@ def answer_fact_question_web(user_question):
 
 # --- WEB ROUTES ---
 
-# The home page of your web AI
 @app.route('/', methods=['GET', 'POST'])
 def home():
-    global user_name
-
+    # We now store and get the name from the 'session' (unique to each user's browser)
     if request.method == 'POST':
         name_input = request.form.get('user_name_input')
         if name_input:
-            user_name = name_input.capitalize()
+            session['user_name'] = name_input.capitalize() # Store name in the user's session
+
+    # Get user_name from session, default to empty string if not set
+    current_user_name = session.get('user_name', '')
 
     current_hour = datetime.datetime.now().hour
     if current_hour < 12:
@@ -101,10 +99,9 @@ def home():
         <li><a href="/fact_bot">Ask a fact question</a></li>
     </ul>
     """
-    # Added "Forget Name" link here
     forget_name_link = "<p><a href='/reset_name'>Forget my name</a></p>"
 
-    if not user_name:
+    if not current_user_name:
         return f"""
         <h1>{time_greeting}! Welcome to your Companion!</h1>
         <p>Before we start, what's your name?</p>
@@ -115,7 +112,7 @@ def home():
         """
     else:
         return f"""
-        <h1>{time_greeting}, {user_name}! Welcome back to your Companion!</h1>
+        <h1>{time_greeting}, {current_user_name}! Welcome back to your Companion!</h1>
         {menu_html}
         {forget_name_link}
         """
@@ -123,11 +120,10 @@ def home():
 # New route to reset the user's name
 @app.route('/reset_name')
 def reset_name():
-    global user_name
-    user_name = "" # Clear the global variable
+    # Remove the 'user_name' from the current user's session
+    session.pop('user_name', None)
     return redirect(url_for('home')) # Redirect back to the home page
 
-# This route handles the mood checker functionality
 @app.route('/mood_checker', methods=['GET', 'POST'])
 def mood_checker():
     if request.method == 'POST':
@@ -149,7 +145,6 @@ def mood_checker():
         <p><a href="/">Go back to main menu</a></p>
         """
 
-# This route handles the math solver functionality
 @app.route('/math_solver', methods=['GET', 'POST'])
 def math_solver():
     if request.method == 'POST':
@@ -176,13 +171,27 @@ def math_solver():
         <p><a href="/">Go back to main menu</a></p>
         """
 
-# This route handles the fact bot functionality
 @app.route('/fact_bot', methods=['GET', 'POST'])
 def fact_bot():
     if request.method == 'POST':
         user_question_input = request.form['question']
         ai_response = answer_fact_question_web(user_question_input)
         return f"""
-        <h1>Your Quest
+        <h1>Your Question: {user_question_input}</h1>
+        <p>AI says: {ai_response}</p>
+        <p><a href="/fact_bot">Ask another question</a></p>
+        <p><a href="/">Go back to main menu</a></p>
+        """
+    else:
+        return """
+        <h1>Fact Bot Mode</h1>
+        <p>Ask me a question about facts I know.</p>
+        <form method="POST" action="/fact_bot">
+            Your question: <input type="text" name="question" placeholder="e.g., what is your name">
+            <input type="submit" value="Ask AI">
+        </form>
+        <p><a href="/">Go back to main menu</a></p>
+        """
 
-
+if __name__ == '__main__':
+    app.run(debug=True)
