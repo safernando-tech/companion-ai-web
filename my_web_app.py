@@ -3,7 +3,7 @@ from flask import Flask, render_template_string, request, redirect, url_for, ses
 
 app = Flask(__name__)
 # THIS IS VERY IMPORTANT! Flask needs a secret key to keep session data secure.
-# Make sure to replace 'b'i\xc9s\xb3\xce<N\x9e\xc0H\xa9\x14,\xfb\xd9x8:\xc41\xf1\x0f\xd6]'
+# Make sure to replace "b'i\xc9s\xb3\xce<N\x9e\xc0H\xa9\x14,\xfb\xd9x8:\xc41\xf1\x0f\xd6]"
 ' with the random key you generated.
 app.secret_key = 'YOUR_VERY_LONG_AND_RANDOM_SECRET_KEY_HERE'
 
