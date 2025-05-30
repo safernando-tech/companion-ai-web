@@ -1,9 +1,10 @@
 import datetime
-from flask import Flask, render_template_string, request, redirect, url_for, session # Added 'session'
+from flask import Flask, render_template_string, request, redirect, url_for, session
 
 app = Flask(__name__)
 # THIS IS VERY IMPORTANT! Flask needs a secret key to keep session data secure.
-app.secret_key = "VoNScYT9hixEeff5NmyFkOGlC_3hHnJb" # Your secret key is now correctly here!
+# Make sure to replace 'drsY4t4GXVFJqcY-r0X3Vf9MhRohKbLw' with the random key you generated.
+app.secret_key = 'YOUR_VERY_LONG_AND_RANDOM_SECRET_KEY_HERE' # PASTE YOUR NEW KEY HERE INSIDE DOUBLE QUOTES!
 
 # --- GLOBAL KNOWLEDGE BASE FOR FACT BOT ---
 knowledge_base = {
@@ -158,4 +159,38 @@ def math_solver():
         """
     else:
         return """
-        <h1>Math
+        <h1>Math Solver Mode</h1>
+        <p>I can do addition (+), subtraction (-), multiplication (*), and division (/).</p>
+        <form method="POST" action="/math_solver">
+            First Number: <input type="text" name="num1"><br><br>
+            Operation (+, -, *, /): <input type="text" name="operation"><br><br>
+            Second Number: <input type="text" name="num2"><br><br>
+            <input type="submit" value="Calculate">
+        </form>
+        <p><a href="/">Go back to main menu</a></p>
+        """
+
+@app.route('/fact_bot', methods=['GET', 'POST'])
+def fact_bot():
+    if request.method == 'POST':
+        user_question_input = request.form['question']
+        ai_response = answer_fact_question_web(user_question_input)
+        return f"""
+        <h1>Your Question: {user_question_input}</h1>
+        <p>AI says: {ai_response}</p>
+        <p><a href="/fact_bot">Ask another question</a></p>
+        <p><a href="/">Go back to main menu</a></p>
+        """
+    else:
+        return """
+        <h1>Fact Bot Mode</h1>
+        <p>Ask me a question about facts I know.</p>
+        <form method="POST" action="/fact_bot">
+            Your question: <input type="text" name="question" placeholder="e.g., what is your name">
+            <input type="submit" value="Ask AI">
+        </form>
+        <p><a href="/">Go back to main menu</a></p>
+        """
+
+if __name__ == '__main__':
+    app.run(debug=True)
